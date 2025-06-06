@@ -1,0 +1,39 @@
+name: Build OpenWrt for WE8206-T2
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up environment
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential libncurses5-dev libncursesw5-dev \
+          zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3 \
+          python3-distutils rsync subversion libz-dev file
+
+    - name: Clone OpenWrt
+      run: |
+        git clone --depth 1 https://github.com/openwrt/openwrt.git
+        cd openwrt
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+
+    - name: Copy config and build
+      run: |
+        cp .config openwrt/.config
+        cd openwrt
+        make defconfig
+        make download -j$(nproc) || true
+        make -j$(nproc)
+
+    - name: Upload firmware image
+      uses: actions/upload-artifact@v3
+      with:
+        name: openwrt-firmware
+        path: openwrt/bin/targets/
