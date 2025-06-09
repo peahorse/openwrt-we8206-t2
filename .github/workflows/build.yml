@@ -32,7 +32,6 @@ jobs:
       - name: Build firmware
         run: |
           cd openwrt
-          make defconfig
           make -j$(nproc) download
           make -j$(nproc)
 
